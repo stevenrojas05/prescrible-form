@@ -37,7 +37,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { analyzePrescription, PrescriptionAnalysis as AnalysisType } from "@/services/prescriptionAgent";
-import { PrescriptionAnalysis } from "@/components/PrescriptionAnalysis";
+import { analyzeWithOpenAI } from "@/services/openaiAgent";
+import { compareAnalyses, ComparisonResult } from "@/services/comparisonAgent";
+import { ComparisonAnalysis } from "@/components/ComparisonAnalysis";
 
 const medicationSchema = z.object({
   name: z.string().min(1, "El nombre del medicamento es requerido"),
@@ -82,7 +84,9 @@ const units = ["mg", "ml", "g", "mcg", "UI", "gotas", "comprimidos"];
 export function PrescriptionForm() {
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<AnalysisType | null>(null);
+  const [geminiAnalysis, setGeminiAnalysis] = useState<AnalysisType | null>(null);
+  const [openaiAnalysis, setOpenaiAnalysis] = useState<AnalysisType | null>(null);
+  const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null);
   const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
   
   const form = useForm<PrescriptionFormValues>({
@@ -127,7 +131,9 @@ export function PrescriptionForm() {
   const onSubmit = async (data: PrescriptionFormValues) => {
     setIsAnalyzing(true);
     setShowAnalysisDialog(true);
-    setAnalysis(null);
+    setGeminiAnalysis(null);
+    setOpenaiAnalysis(null);
+    setComparisonResult(null);
     
     try {
       // Obtener datos del paciente seleccionado
@@ -139,17 +145,33 @@ export function PrescriptionForm() {
         return;
       }
 
-      // Analizar la prescripción con el agente AI (Gemini)
-      const analysisResult = await analyzePrescription(data, patient);
-      setAnalysis(analysisResult);
+      console.log('🚀 Iniciando análisis multi-agente...');
       
-      // Mostrar resultado según el status
-      if (analysisResult.status === 'approved') {
-        toast.success("✅ Prescripción aprobada por el agente AI");
-      } else if (analysisResult.status === 'warning') {
-        toast.warning("⚠️ Prescripción con advertencias - Revisar recomendaciones");
+      // PASO 1: Ejecutar Gemini y OpenAI en PARALELO
+      const [geminiResult, openaiResult] = await Promise.all([
+        analyzePrescription(data, patient),
+        analyzeWithOpenAI(data, patient)
+      ]);
+      
+      console.log('✅ Ambos agentes completaron su análisis');
+      setGeminiAnalysis(geminiResult);
+      setOpenaiAnalysis(openaiResult);
+      
+      // PASO 2: Comparar los resultados con el tercer agente
+      console.log('🔍 Iniciando comparación de resultados...');
+      const comparison = await compareAnalyses(geminiResult, openaiResult, data);
+      setComparisonResult(comparison);
+      console.log('✅ Comparación completada');
+      
+      // Mostrar resultado según la comparación
+      if (comparison.needsHumanReview) {
+        toast.error("⚠️ SE REQUIERE REVISIÓN HUMANA - Discrepancias significativas detectadas");
+      } else if (comparison.agreement === 'high') {
+        toast.success("✅ Ambos agentes coinciden - Alto nivel de confianza");
+      } else if (comparison.agreement === 'medium') {
+        toast.warning("⚠️ Acuerdo moderado entre agentes - Revisar diferencias");
       } else {
-        toast.error("❌ Prescripción rechazada - Requiere correcciones");
+        toast.warning("⚠️ Bajo acuerdo entre agentes - Se recomienda precaución");
       }
       
     } catch (error: any) {
@@ -162,13 +184,13 @@ export function PrescriptionForm() {
   };
 
   const handleSavePrescription = () => {
-    console.log("Guardando prescripción aprobada:", { analysis });
+    console.log("Guardando prescripción aprobada:", { geminiAnalysis, openaiAnalysis, comparisonResult });
     toast.success("✅ Prescripción guardada exitosamente");
     setShowAnalysisDialog(false);
   };
 
   const handleSaveWithWarnings = () => {
-    console.log("Guardando prescripción con advertencias:", { analysis });
+    console.log("Guardando prescripción con advertencias:", { geminiAnalysis, openaiAnalysis, comparisonResult });
     toast.info("⚠️ Prescripción guardada con advertencias registradas");
     setShowAnalysisDialog(false);
   };
@@ -192,7 +214,9 @@ export function PrescriptionForm() {
     });
     // Limpiar estados
     setSelectedPatientId("");
-    setAnalysis(null);
+    setGeminiAnalysis(null);
+    setOpenaiAnalysis(null);
+    setComparisonResult(null);
     setShowAnalysisDialog(false);
     // Notificación
     toast.info("Formulario limpiado");
@@ -572,19 +596,24 @@ export function PrescriptionForm() {
           </div>
         </div>
 
-        {/* Diálogo de análisis del agente AI */}
+        {/* Diálogo de análisis multi-agente */}
         <AlertDialog open={showAnalysisDialog} onOpenChange={setShowAnalysisDialog}>
-          <AlertDialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <AlertDialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
             <AlertDialogHeader>
               <AlertDialogTitle className="text-2xl">
-                🤖 Análisis de Prescripción con IA
+                🤖 Análisis Multi-Agente de Prescripción
               </AlertDialogTitle>
               <AlertDialogDescription>
-                Revisión automática de seguridad y eficacia realizada por Google Gemini
+                Revisión automática con Gemini y ChatGPT, validada mediante comparación inteligente
               </AlertDialogDescription>
             </AlertDialogHeader>
             
-            <PrescriptionAnalysis analysis={analysis} isLoading={isAnalyzing} />
+            <ComparisonAnalysis 
+              geminiAnalysis={geminiAnalysis}
+              openaiAnalysis={openaiAnalysis}
+              comparisonResult={comparisonResult}
+              isLoading={isAnalyzing}
+            />
             
             <AlertDialogFooter className="gap-2">
               <Button 
@@ -595,36 +624,41 @@ export function PrescriptionForm() {
                 Cerrar
               </Button>
               
-              {analysis?.status === 'approved' && (
-                <Button 
-                  onClick={handleSavePrescription}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  ✓ Confirmar y Guardar
-                </Button>
-              )}
-              
-              {analysis?.status === 'warning' && (
+              {comparisonResult && !comparisonResult.needsHumanReview && (
                 <>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowAnalysisDialog(false)}
-                  >
-                    Modificar Prescripción
-                  </Button>
-                  <Button 
-                    variant="secondary" 
-                    onClick={handleSaveWithWarnings}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white"
-                  >
-                    ⚠ Aceptar Advertencias y Guardar
-                  </Button>
+                  {(geminiAnalysis?.status === 'approved' || openaiAnalysis?.status === 'approved') && (
+                    <Button 
+                      onClick={handleSavePrescription}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      ✓ Confirmar y Guardar
+                    </Button>
+                  )}
+                  
+                  {(geminiAnalysis?.status === 'warning' || openaiAnalysis?.status === 'warning') && (
+                    <Button 
+                      variant="secondary" 
+                      onClick={handleSaveWithWarnings}
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                    >
+                      ⚠ Aceptar con Advertencias
+                    </Button>
+                  )}
                 </>
               )}
               
-              {analysis?.status === 'rejected' && (
+              {comparisonResult?.needsHumanReview && (
                 <Button 
                   variant="destructive" 
+                  onClick={() => setShowAnalysisDialog(false)}
+                >
+                  ⚠️ Enviar a Revisión Humana
+                </Button>
+              )}
+              
+              {(geminiAnalysis?.status === 'rejected' || openaiAnalysis?.status === 'rejected') && (
+                <Button 
+                  variant="outline" 
                   onClick={() => setShowAnalysisDialog(false)}
                 >
                   ✗ Corregir Prescripción
