@@ -1,0 +1,62 @@
+[
+  {
+    "id": "1",
+    "name": "Paracetamol",
+    "commonDoses": ["500mg", "1g"],
+    "routes": ["Oral", "Intravenosa"]
+  },
+  {
+    "id": "2",
+    "name": "Ibuprofeno",
+    "commonDoses": ["400mg", "600mg"],
+    "routes": ["Oral"]
+  },
+  {
+    "id": "3",
+    "name": "Amoxicilina",
+    "commonDoses": ["500mg", "1g"],
+    "routes": ["Oral"]
+  },
+  {
+    "id": "4",
+    "name": "Omeprazol",
+    "commonDoses": ["20mg", "40mg"],
+    "routes": ["Oral"]
+  },
+  {
+    "id": "5",
+    "name": "Metformina",
+    "commonDoses": ["500mg", "850mg", "1g"],
+    "routes": ["Oral"]
+  },
+  {
+    "id": "6",
+    "name": "Losartán",
+    "commonDoses": ["50mg", "100mg"],
+    "routes": ["Oral"]
+  },
+  {
+    "id": "7",
+    "name": "Atorvastatina",
+    "commonDoses": ["10mg", "20mg", "40mg"],
+    "routes": ["Oral"]
+  },
+  {
+    "id": "8",
+    "name": "Insulina",
+    "commonDoses": ["10UI", "20UI", "30UI"],
+    "routes": ["Subcutánea"]
+  },
+  {
+    "id": "9",
+    "name": "Salbutamol",
+    "commonDoses": ["100mcg", "200mcg"],
+    "routes": ["Inhalatoria", "Oral"]
+  },
+  {
+    "id": "10",
+    "name": "Diclofenaco",
+    "commonDoses": ["50mg", "75mg"],
+    "routes": ["Oral", "Intramuscular", "Tópica"]
+  }
+]

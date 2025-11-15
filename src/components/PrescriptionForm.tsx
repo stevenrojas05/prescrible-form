@@ -25,6 +25,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, FileText, Pill } from "lucide-react";
 import { toast } from "sonner";
+import medicationsData from "@/data/medications.json";
 
 const medicationSchema = z.object({
   name: z.string().min(1, "El nombre del medicamento es requerido"),
@@ -220,9 +221,20 @@ export function PrescriptionForm() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Nombre del Medicamento</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Ej: Paracetamol" {...field} />
-                            </FormControl>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Seleccione un medicamento" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className="bg-popover z-50">
+                                {medicationsData.map((medication) => (
+                                  <SelectItem key={medication.id} value={medication.name}>
+                                    {medication.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
