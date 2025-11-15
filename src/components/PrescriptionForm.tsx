@@ -24,10 +24,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, FileText, Pill, AlertCircle, History } from "lucide-react";
+import { Plus, Trash2, FileText, Pill, AlertCircle, History, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import medicationsData from "@/data/medications.json";
 import patientsData from "@/data/patients.json";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { analyzePrescription, PrescriptionAnalysis as AnalysisType } from "@/services/prescriptionAgent";
+import { PrescriptionAnalysis } from "@/components/PrescriptionAnalysis";
 
 const medicationSchema = z.object({
   name: z.string().min(1, "El nombre del medicamento es requerido"),
@@ -71,6 +81,9 @@ const units = ["mg", "ml", "g", "mcg", "UI", "gotas", "comprimidos"];
 
 export function PrescriptionForm() {
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<AnalysisType | null>(null);
+  const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
   
   const form = useForm<PrescriptionFormValues>({
     resolver: zodResolver(prescriptionSchema),
@@ -111,9 +124,78 @@ export function PrescriptionForm() {
     return age;
   };
 
-  const onSubmit = (data: PrescriptionFormValues) => {
-    console.log("Prescription data:", data);
-    toast.success("Prescripción guardada exitosamente");
+  const onSubmit = async (data: PrescriptionFormValues) => {
+    setIsAnalyzing(true);
+    setShowAnalysisDialog(true);
+    setAnalysis(null);
+    
+    try {
+      // Obtener datos del paciente seleccionado
+      const patient = patientsData.patients.find(p => p.patient_id === data.patient);
+      
+      if (!patient) {
+        toast.error("Paciente no encontrado");
+        setIsAnalyzing(false);
+        return;
+      }
+
+      // Analizar la prescripción con el agente AI (Gemini)
+      const analysisResult = await analyzePrescription(data, patient);
+      setAnalysis(analysisResult);
+      
+      // Mostrar resultado según el status
+      if (analysisResult.status === 'approved') {
+        toast.success("✅ Prescripción aprobada por el agente AI");
+      } else if (analysisResult.status === 'warning') {
+        toast.warning("⚠️ Prescripción con advertencias - Revisar recomendaciones");
+      } else {
+        toast.error("❌ Prescripción rechazada - Requiere correcciones");
+      }
+      
+    } catch (error: any) {
+      console.error('Error analyzing prescription:', error);
+      toast.error(error.message || "Error al analizar la prescripción");
+      setShowAnalysisDialog(false);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleSavePrescription = () => {
+    console.log("Guardando prescripción aprobada:", { analysis });
+    toast.success("✅ Prescripción guardada exitosamente");
+    setShowAnalysisDialog(false);
+  };
+
+  const handleSaveWithWarnings = () => {
+    console.log("Guardando prescripción con advertencias:", { analysis });
+    toast.info("⚠️ Prescripción guardada con advertencias registradas");
+    setShowAnalysisDialog(false);
+  };
+
+  const handleClearForm = () => {
+    // Resetear el formulario a valores por defecto
+    form.reset({
+      patient: "",
+      diagnosis: "",
+      medications: [
+        {
+          name: "",
+          route: "",
+          dose: "",
+          unit: "",
+          singleDose: false,
+          frequency: "",
+          frequencyUnit: "horas",
+        },
+      ],
+    });
+    // Limpiar estados
+    setSelectedPatientId("");
+    setAnalysis(null);
+    setShowAnalysisDialog(false);
+    // Notificación
+    toast.info("Formulario limpiado");
   };
 
   return (
@@ -469,12 +551,88 @@ export function PrescriptionForm() {
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline">
-            Cancelar
+        <div className="flex justify-between items-center gap-3">
+          <Button 
+            type="button" 
+            variant="outline"
+            onClick={handleClearForm}
+            className="gap-2"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Limpiar Formulario
           </Button>
-          <Button type="submit">Guardar Prescripción</Button>
+          
+          <div className="flex gap-3">
+            <Button type="button" variant="outline">
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isAnalyzing}>
+              {isAnalyzing ? "Analizando..." : "Analizar y Guardar Prescripción"}
+            </Button>
+          </div>
         </div>
+
+        {/* Diálogo de análisis del agente AI */}
+        <AlertDialog open={showAnalysisDialog} onOpenChange={setShowAnalysisDialog}>
+          <AlertDialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-2xl">
+                🤖 Análisis de Prescripción con IA
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Revisión automática de seguridad y eficacia realizada por Google Gemini
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            
+            <PrescriptionAnalysis analysis={analysis} isLoading={isAnalyzing} />
+            
+            <AlertDialogFooter className="gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAnalysisDialog(false)}
+                disabled={isAnalyzing}
+              >
+                Cerrar
+              </Button>
+              
+              {analysis?.status === 'approved' && (
+                <Button 
+                  onClick={handleSavePrescription}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  ✓ Confirmar y Guardar
+                </Button>
+              )}
+              
+              {analysis?.status === 'warning' && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowAnalysisDialog(false)}
+                  >
+                    Modificar Prescripción
+                  </Button>
+                  <Button 
+                    variant="secondary" 
+                    onClick={handleSaveWithWarnings}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                  >
+                    ⚠ Aceptar Advertencias y Guardar
+                  </Button>
+                </>
+              )}
+              
+              {analysis?.status === 'rejected' && (
+                <Button 
+                  variant="destructive" 
+                  onClick={() => setShowAnalysisDialog(false)}
+                >
+                  ✗ Corregir Prescripción
+                </Button>
+              )}
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </form>
     </Form>
   );
