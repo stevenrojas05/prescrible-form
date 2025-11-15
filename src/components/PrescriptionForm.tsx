@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -23,9 +23,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, FileText, Pill } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Trash2, FileText, Pill, AlertCircle, History } from "lucide-react";
 import { toast } from "sonner";
 import medicationsData from "@/data/medications.json";
+import patientsData from "@/data/patients.json";
 
 const medicationSchema = z.object({
   name: z.string().min(1, "El nombre del medicamento es requerido"),
@@ -53,14 +55,6 @@ const prescriptionSchema = z.object({
 
 type PrescriptionFormValues = z.infer<typeof prescriptionSchema>;
 
-// Mock data for patients
-const patients = [
-  { id: "1", name: "Juan Pérez García", age: 45 },
-  { id: "2", name: "María López Rodríguez", age: 32 },
-  { id: "3", name: "Carlos Sánchez Martínez", age: 58 },
-  { id: "4", name: "Ana Torres Fernández", age: 29 },
-];
-
 const routes = [
   "Oral",
   "Intravenosa",
@@ -76,6 +70,8 @@ const routes = [
 const units = ["mg", "ml", "g", "mcg", "UI", "gotas", "comprimidos"];
 
 export function PrescriptionForm() {
+  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
+  
   const form = useForm<PrescriptionFormValues>({
     resolver: zodResolver(prescriptionSchema),
     defaultValues: {
@@ -100,6 +96,21 @@ export function PrescriptionForm() {
     name: "medications",
   });
 
+  const selectedPatient = useMemo(() => {
+    return patientsData.patients.find(p => p.patient_id === selectedPatientId);
+  }, [selectedPatientId]);
+
+  const calculateAge = (birthDate: string) => {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   const onSubmit = (data: PrescriptionFormValues) => {
     console.log("Prescription data:", data);
     toast.success("Prescripción guardada exitosamente");
@@ -120,7 +131,7 @@ export function PrescriptionForm() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="patient" className="mt-6">
+          <TabsContent value="patient" className="mt-6 space-y-4">
             <Card>
               <CardContent className="pt-6 space-y-4">
                 <FormField
@@ -129,16 +140,22 @@ export function PrescriptionForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Paciente</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setSelectedPatientId(value);
+                        }} 
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Seleccione un paciente" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
-                          {patients.map((patient) => (
-                            <SelectItem key={patient.id} value={patient.id}>
-                              {patient.name} - {patient.age} años
+                        <SelectContent className="bg-popover z-50">
+                          {patientsData.patients.map((patient) => (
+                            <SelectItem key={patient.patient_id} value={patient.patient_id}>
+                              {patient.nombre} {patient.apellido} - {calculateAge(patient.fecha_nacimiento)} años ({patient.documento})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -158,6 +175,7 @@ export function PrescriptionForm() {
                         <Textarea
                           placeholder="Ingrese el diagnóstico del paciente"
                           className="resize-none"
+                          rows={3}
                           {...field}
                         />
                       </FormControl>
@@ -167,6 +185,86 @@ export function PrescriptionForm() {
                 />
               </CardContent>
             </Card>
+
+            {selectedPatient && (
+              <>
+                {selectedPatient.alergias.length > 0 && selectedPatient.alergias[0].alergeno !== "Ninguna conocida" && (
+                  <Card className="border-destructive">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-destructive text-lg">
+                        <AlertCircle className="h-5 w-5" />
+                        Alergias
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {selectedPatient.alergias.map((alergia, index) => (
+                          <div key={index} className="p-3 bg-destructive/10 rounded-md">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-semibold text-destructive">{alergia.alergeno}</span>
+                              <Badge variant="destructive">{alergia.severidad}</Badge>
+                            </div>
+                            {alergia.reaccion && (
+                              <p className="text-sm text-muted-foreground mb-1">
+                                Reacción: {alergia.reaccion}
+                              </p>
+                            )}
+                            {alergia.notas && (
+                              <p className="text-sm text-muted-foreground">
+                                {alergia.notas}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <History className="h-5 w-5" />
+                      Medicamentos Anteriores
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedPatient.medicamentos_recetados_anteriores.length > 0 ? (
+                      <div className="space-y-3">
+                        {selectedPatient.medicamentos_recetados_anteriores.map((med, index) => (
+                          <div key={index} className="p-3 border rounded-md">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-semibold">{med.nombre_generico}</span>
+                              <Badge variant={med.estatus === "activo" ? "default" : "secondary"}>
+                                {med.estatus}
+                              </Badge>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                              <p>Concentración: {med.concentracion}</p>
+                              <p>Vía: {med.via}</p>
+                              <p>Dosis: {med.dosis} {med.unidad}</p>
+                              <p>Frecuencia: {med.frecuencia}</p>
+                            </div>
+                            {med.indicación && (
+                              <p className="text-sm mt-2">
+                                <span className="font-medium">Indicación:</span> {med.indicación}
+                              </p>
+                            )}
+                            {med.notas && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {med.notas}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-sm">No hay medicamentos registrados</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="medications" className="mt-6">

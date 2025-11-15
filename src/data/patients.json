@@ -1,0 +1,250 @@
+{
+  "patients": [
+    {
+      "patient_id": "b7f3c8d2-9f21-4a3a-9e6d-1a2b3c4d5e6f",
+      "nombre": "María",
+      "apellido": "González",
+      "fecha_nacimiento": "1978-04-12",
+      "genero": "F",
+      "documento": "CC-1023456789",
+      "contacto": {
+        "telefono": "+57-300-1234567",
+        "email": "maria.gonzalez@email.com"
+      },
+      "peso_kg": 72,
+      "talla_cm": 162,
+      "medicamentos_recetados_anteriores": [
+        {
+          "medication_id": "8f14e45f-ea7b-4a2b-9b3d-1c2f3a4b5c6d",
+          "nombre_generico": "Metformina",
+          "nombre_comercial": ["Glucophage"],
+          "concentracion": "850 mg",
+          "forma_farmaceutica": "tableta",
+          "via": "oral",
+          "dosis": 850,
+          "unidad": "mg",
+          "frecuencia": "cada 12 horas",
+          "inicio": "2020-02-15",
+          "fin": "2024-10-01",
+          "estatus": "finalizado",
+          "indicación": "Diabetes mellitus tipo 2",
+          "prescriptor": "Dr. Juan Pérez",
+          "notas": "Suspendido por control glucémico óptimo."
+        },
+        {
+          "medication_id": "a3d2f6b1-6a3c-4b2d-9f11-2e3f4a5b6c7d",
+          "nombre_generico": "Enalapril",
+          "nombre_comercial": ["Enapril"],
+          "concentracion": "10 mg",
+          "forma_farmaceutica": "tableta",
+          "via": "oral",
+          "dosis": 10,
+          "unidad": "mg",
+          "frecuencia": "diaria",
+          "inicio": "2021-06-01",
+          "fin": null,
+          "estatus": "activo",
+          "indicación": "Hipertensión arterial",
+          "prescriptor": "Dr. Luisa Rodríguez",
+          "notas": "Ajuste pendiente de creatinina."
+        }
+      ],
+      "antecedentes": {
+        "personales": [
+          {
+            "condicion": "Diabetes mellitus tipo 2",
+            "fecha_diagnostico": "2019-11-20",
+            "estatus": "controlada",
+            "notas": "Último HbA1c 6.8% (2024-09-15)"
+          },
+          {
+            "condicion": "Hipertensión arterial",
+            "fecha_diagnostico": "2021-05-10",
+            "estatus": "activa",
+            "notas": "Enalapril 10 mg diario"
+          }
+        ],
+        "familiares": [
+          {
+            "relacion": "madre",
+            "condicion": "Hipertensión arterial",
+            "notas": "diagnosticada a los 60 años"
+          },
+          {
+            "relacion": "padre",
+            "condicion": "Infarto agudo de miocardio",
+            "notas": "fallecido a los 68 años"
+          }
+        ]
+      },
+      "alergias": [
+        {
+          "alergeno": "Penicilina",
+          "reaccion": "Urticaria y angioedema",
+          "severidad": "grave",
+          "registrado_en": "2018-03-10",
+          "notas": "Evitar beta-lactámicos hasta valoración por alergólogo"
+        }
+      ],
+      "audit": {
+        "created_at": "2024-10-01T09:12:00Z",
+        "updated_at": "2025-11-10T14:30:00Z",
+        "created_by": "sistema_import",
+        "updated_by": "user_98"
+      }
+    },
+    {
+      "patient_id": "c9d8b7a6-5f43-4b5c-8d9e-0f1a2b3c4d5e",
+      "nombre": "Andrés",
+      "apellido": "Ramírez",
+      "fecha_nacimiento": "2012-09-05",
+      "genero": "M",
+      "documento": "TI-99887766",
+      "contacto": {
+        "telefono": "+57-310-7654321",
+        "email": null
+      },
+      "peso_kg": 38,
+      "talla_cm": 145,
+      "medicamentos_recetados_anteriores": [
+        {
+          "medication_id": "f1e2d3c4-b5a6-4c3d-8f9e-1a2b3c4d5e6f",
+          "nombre_generico": "Paracetamol",
+          "nombre_comercial": ["Acetaminofén"],
+          "concentracion": "160 mg/5 ml",
+          "forma_farmaceutica": "jarabe",
+          "via": "oral",
+          "dosis": 10,
+          "unidad": "mg/kg/dosis",
+          "frecuencia": "cada 6-8 horas si hay fiebre",
+          "inicio": "2025-03-10",
+          "fin": null,
+          "estatus": "activo",
+          "indicación": "Dolor / fiebre",
+          "prescriptor": "Pediatría - Dra. Camila Ortiz",
+          "notas": "Dosis calculada según peso; tope diario 60 mg/kg"
+        }
+      ],
+      "antecedentes": {
+        "personales": [
+          {
+            "condicion": "Asma intermitente",
+            "fecha_diagnostico": "2018-07-12",
+            "estatus": "intermitente",
+            "notas": "Usa salbutamol inhalador PRN"
+          }
+        ],
+        "familiares": [
+          {
+            "relacion": "hermano",
+            "condicion": "Asma",
+            "notas": "hermano mayor con asma"
+          }
+        ]
+      },
+      "alergias": [
+        {
+          "alergeno": "Ninguna conocida",
+          "reaccion": null,
+          "severidad": "ninguna",
+          "registrado_en": "2024-09-01",
+          "notas": "Padre confirma en consulta"
+        }
+      ],
+      "audit": {
+        "created_at": "2025-03-10T11:05:00Z",
+        "updated_at": "2025-11-12T08:20:00Z",
+        "created_by": "pediatria_clinica",
+        "updated_by": "user_12"
+      }
+    },
+    {
+      "patient_id": "d1e2f3a4-b5c6-4d7e-8f90-1a2b3c4d5e6f",
+      "nombre": "Carlos",
+      "apellido": "Vargas",
+      "fecha_nacimiento": "1950-01-20",
+      "genero": "M",
+      "documento": "CC-1234567890",
+      "contacto": {
+        "telefono": "+57-320-9988776",
+        "email": "carlos.vargas@mail.com"
+      },
+      "peso_kg": 85,
+      "talla_cm": 170,
+      "medicamentos_recetados_anteriores": [
+        {
+          "medication_id": "a9b8c7d6-e5f4-4a3b-9c0d-1e2f3a4b5c6d",
+          "nombre_generico": "Warfarina",
+          "nombre_comercial": ["Coumadin"],
+          "concentracion": "5 mg",
+          "forma_farmaceutica": "tableta",
+          "via": "oral",
+          "dosis": "según INR",
+          "unidad": "mg",
+          "frecuencia": "variable",
+          "inicio": "2019-01-10",
+          "fin": null,
+          "estatus": "activo",
+          "indicación": "Anticoagulación por fibrilación auricular",
+          "prescriptor": "Cardiología - Dr. Héctor Ruiz",
+          "notas": "Control INR semanal; historial de ajustes frecuentes"
+        },
+        {
+          "medication_id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+          "nombre_generico": "Aspirina",
+          "nombre_comercial": ["Aspirina"],
+          "concentracion": "81 mg",
+          "forma_farmaceutica": "tableta",
+          "via": "oral",
+          "dosis": 81,
+          "unidad": "mg",
+          "frecuencia": "diaria",
+          "inicio": "2015-05-01",
+          "fin": "2019-01-09",
+          "estatus": "finalizado",
+          "indicación": "Prevención secundaria (suspensión por inicio de warfarina)",
+          "prescriptor": "Medicina general",
+          "notas": "Suspendido al iniciar anticoagulación"
+        }
+      ],
+      "antecedentes": {
+        "personales": [
+          {
+            "condicion": "Fibrilación auricular",
+            "fecha_diagnostico": "2018-11-02",
+            "estatus": "activa",
+            "notas": "Tratamiento con anticoagulación crónica"
+          },
+          {
+            "condicion": "Episodios previos de sangrado gastrointestinal",
+            "fecha_diagnostico": "2017-04-15",
+            "estatus": "controlado",
+            "notas": "Evaluado por gastroenterología"
+          }
+        ],
+        "familiares": [
+          {
+            "relacion": "madre",
+            "condicion": "Hipertensión arterial",
+            "notas": "diagnosticada a los 70 años"
+          }
+        ]
+      },
+      "alergias": [
+        {
+          "alergeno": "AINEs (Ibuprofeno)",
+          "reaccion": "Hemorragia digestiva previa",
+          "severidad": "alta",
+          "registrado_en": "2017-04-16",
+          "notas": "Se recomienda evitar AINEs; consultar alternativas para dolor"
+        }
+      ],
+      "audit": {
+        "created_at": "2019-01-10T08:00:00Z",
+        "updated_at": "2025-11-14T10:00:00Z",
+        "created_by": "cardiologia",
+        "updated_by": "user_3"
+      }
+    }
+  ]
+}
